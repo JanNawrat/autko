@@ -14,6 +14,10 @@
 
 
 #include <Arduino.h>
+/*
+ * version used: https://github.com/johnrickman/LiquidCrystal_I2C
+ */
+#include <LiquidCrystal_I2C.h>
 
 
 #ifndef Wheels_h
@@ -33,8 +37,16 @@ class Wheels {
         void attachLeft(int pinForward, int pinBack, int pinSpeed);
         void attach(int pinRightForward, int pinRightBack, int pinRightSpeed,
                     int pinLeftForward, int pinLeftBack, int pinLeftSpeed);
+
         /*
-         *  funkcje ruchu
+         *  LCD functions using LiquidCrystal_I2C
+         */
+        void initLCD();
+        void printSpeedLeft();
+        void printSpeedRight();
+
+        /*
+         *  movement functions
          */
         void forward();
         void forwardLeft();
@@ -60,6 +72,13 @@ class Wheels {
     private: 
         int pinsRight[3];
         int pinsLeft[3];
+        uint8_t speedLeft = 0;
+        uint8_t speedRight = 0;
+        /*
+         *  0 = not moving, 1 = moving forward, 2 = moving backward
+         */
+        int dirLeft = 0;
+        int dirRight = 0;
 };
 
 

@@ -1,13 +1,17 @@
 #include "Wheels.h"
 
-
-
 Wheels w;
 volatile char cmd;
 
 void setup() {
-  // put your setup code here, to run once:
-  w.attach(2, 3, 6, 4, 5, 9);
+  // 1 - right wheel forward
+  // 2 - right wheel backward
+  // 3 - right wheel speed
+  // 4 - left wheel forward
+  // 5 - left wheel backward
+  // 6 - left wheel speed
+  // pins 9, 10 shouldn't be used because of complications with I2C
+  w.attach(2, 3, 6, 4, 5, 11);
   
   Serial.begin(9600);
   Serial.println("Forward: WAD");
