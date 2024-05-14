@@ -6,10 +6,6 @@
  * 1)  powiązanie odpowiednich pinów I/O Arduino metodą attach() 
  * 2)  ustalenie prędkości setSpeed*()
  * 3)  wywołanie funkcji ruchu
- *
- * TODO:
- *  - zabezpieczenie przed ruchem bez attach()
- *  - ustawienie domyślnej prędkości != 0
  */
 
 
@@ -18,6 +14,8 @@
  * version used: https://github.com/johnrickman/LiquidCrystal_I2C
  */
 #include <LiquidCrystal_I2C.h>
+#include "TimerOne.h"
+#include "conifg.h"
 
 
 #ifndef Wheels_h
@@ -33,8 +31,6 @@ class Wheels {
          *  pinBack    - wejście "wstecz" L298
          *  pinSpeed   - wejście "enable/PWM" L298
          */
-        void attachRight(int pinForward, int pinBack, int pinSpeed);
-        void attachLeft(int pinForward, int pinBack, int pinSpeed);
         void attach(int pinRightForward, int pinRightBack, int pinRightSpeed,
                     int pinLeftForward, int pinLeftBack, int pinLeftSpeed);
 
@@ -69,7 +65,8 @@ class Wheels {
         void goForward(int cm);
         void goBack(int cm);
 
-    private: 
+    private:
+        bool pinsAttached = false;
         int pinsRight[3];
         int pinsLeft[3];
         uint8_t speedLeft = 0;
@@ -79,8 +76,9 @@ class Wheels {
          */
         int dirLeft = 0;
         int dirRight = 0;
+        void updateBeeper();
 };
 
-
+void doBeep();
 
 #endif

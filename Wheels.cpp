@@ -9,23 +9,23 @@ LiquidCrystal_I2C lcd(LCDAddress, 16, 2);
 
 Wheels::Wheels() {}
 
-void Wheels::attachRight(int pF, int pB, int pS) {
-    pinMode(pF, OUTPUT);
-    pinMode(pB, OUTPUT);
-    pinMode(pS, OUTPUT);
-    this->pinsRight[0] = pF;
-    this->pinsRight[1] = pB;
-    this->pinsRight[2] = pS;
-}
+void Wheels::attach(int pinRightForward, int pinRightBack, int pinRightSpeed, int pinLeftForward, int pinLeftBack, int pinLeftSpeed) {
+    // right side
+    pinMode(pinRightForward, OUTPUT);
+    pinMode(pinRightBack, OUTPUT);
+    pinMode(pinRightSpeed, OUTPUT);
+    this->pinsRight[0] = pinRightForward;
+    this->pinsRight[1] = pinRightBack;
+    this->pinsRight[2] = pinRightSpeed;
+    // left side
+    pinMode(pinLeftForward, OUTPUT);
+    pinMode(pinLeftBack, OUTPUT);
+    pinMode(pinLeftSpeed, OUTPUT);
+    this->pinsLeft[0] = pinLeftForward;
+    this->pinsLeft[1] = pinLeftBack;
+    this->pinsLeft[2] = pinLeftSpeed;
 
-
-void Wheels::attachLeft(int pF, int pB, int pS) {
-    pinMode(pF, OUTPUT);
-    pinMode(pB, OUTPUT);
-    pinMode(pS, OUTPUT);
-    this->pinsLeft[0] = pF;
-    this->pinsLeft[1] = pB;
-    this->pinsLeft[2] = pS;
+    this->pinsAttached = true;
 }
 
 void Wheels::initLCD() {
@@ -36,7 +36,8 @@ void Wheels::initLCD() {
   printSpeedRight();
 }
 
-void Wheels::printSpeedLeft() {   
+void Wheels::printSpeedLeft() {
+    this->updateBeeper();  
     lcd.setCursor(0, 1);
     
     if (this->speedLeft == 0 || this-> dirLeft == 0) {
@@ -62,6 +63,7 @@ void Wheels::printSpeedLeft() {
 }
 
 void Wheels::printSpeedRight() {
+    this->updateBeeper();
     lcd.setCursor(12, 1);
     
     if (this->speedRight == 0 || this-> dirRight == 0) {
@@ -87,15 +89,19 @@ void Wheels::printSpeedRight() {
 }
 
 void Wheels::setSpeedRight(uint8_t s) {
-    analogWrite(this->pinsRight[2], s);
-    this->speedRight = s;
-    printSpeedRight();
+    if(this->pinsAttached) {
+        analogWrite(this->pinsRight[2], s);
+        this->speedRight = s;
+        printSpeedRight();
+    }
 }
 
 void Wheels::setSpeedLeft(uint8_t s) {
-    analogWrite(this->pinsLeft[2], s);
-    this->speedLeft = s;
-    printSpeedLeft();
+    if(this->pinsAttached) {
+        analogWrite(this->pinsLeft[2], s);
+        this->speedLeft = s;
+        printSpeedLeft();
+    }
 }
 
 void Wheels::setSpeed(uint8_t s) {
@@ -103,33 +109,36 @@ void Wheels::setSpeed(uint8_t s) {
     setSpeedRight(s);
 }
 
-void Wheels::attach(int pRF, int pRB, int pRS, int pLF, int pLB, int pLS) {
-    this->attachRight(pRF, pRB, pRS);
-    this->attachLeft(pLF, pLB, pLS);
-}
-
 void Wheels::forwardLeft() {
-    SET_MOVEMENT(pinsLeft, HIGH, LOW);
-    this->dirLeft = 1;
-    printSpeedLeft();
+    if(this->pinsAttached) {
+        SET_MOVEMENT(pinsLeft, HIGH, LOW);
+        this->dirLeft = 1;
+        printSpeedLeft();
+    }
 }
 
 void Wheels::forwardRight() {
-    SET_MOVEMENT(pinsRight, HIGH, LOW);
-    this->dirRight = 1;
-    printSpeedRight();
+    if(this->pinsAttached) {
+        SET_MOVEMENT(pinsRight, HIGH, LOW);
+        this->dirRight = 1;
+        printSpeedRight();
+    }
 }
 
 void Wheels::backLeft() {
-    SET_MOVEMENT(pinsLeft, LOW, HIGH);
-    this->dirLeft = -1;
-    printSpeedLeft();
+    if(this->pinsAttached) {
+        SET_MOVEMENT(pinsLeft, LOW, HIGH);
+        this->dirLeft = -1;
+        printSpeedLeft();
+    }
 }
 
 void Wheels::backRight() {
-    SET_MOVEMENT(pinsRight, LOW, HIGH);
-    this->dirRight = -1;
-    printSpeedRight();
+    if(this->pinsAttached) {
+        SET_MOVEMENT(pinsRight, LOW, HIGH);
+        this->dirRight = -1;
+        printSpeedRight();
+    }
 }
 
 void Wheels::forward() {
@@ -143,15 +152,19 @@ void Wheels::back() {
 }
 
 void Wheels::stopLeft() {
-    SET_MOVEMENT(pinsLeft, LOW, LOW);
-    this->dirLeft = 0;
-    printSpeedLeft();
+    if(this->pinsAttached) {
+        SET_MOVEMENT(pinsLeft, LOW, LOW);
+        this->dirLeft = 0;
+        printSpeedLeft();
+    }
 }
 
 void Wheels::stopRight() {
-    SET_MOVEMENT(pinsRight, LOW, LOW);
-    this->dirRight = 0;
-    printSpeedRight();
+    if(this->pinsAttached) {
+        SET_MOVEMENT(pinsRight, LOW, LOW);
+        this->dirRight = 0;
+        printSpeedRight();
+    }
 }
 
 void Wheels::stop() {
@@ -172,3 +185,24 @@ void Wheels::goBack(int cm) {
     delay(cm*100);
     this->stop();
 }
+
+void Wheels::updateBeeper() {
+    if((this->dirLeft == -1 && this->speedLeft > 0) || (this->dirRight == -1 && this->speedRight > 0)) {
+        Timer1.detachInterrupt();
+        if(this->dirLeft == -1 && this->dirRight == -1) {
+            Timer1.attachInterrupt(doBeep, 100000000 / (this->speedLeft + this->speedRight));
+        } else if(this->dirLeft == -1) {
+            Timer1.attachInterrupt(doBeep, 100000000 / this->speedLeft);
+        } else { // if(this->dirRight == -1)
+            Timer1.attachInterrupt(doBeep, 100000000 / this->speedRight);
+        }
+    } else {
+        Timer1.detachInterrupt();
+        digitalWrite(BEEPER, LOW);
+    }
+}
+
+void doBeep() {
+  digitalWrite(BEEPER, digitalRead(BEEPER) ^ 1);
+}
+
