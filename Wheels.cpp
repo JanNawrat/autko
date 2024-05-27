@@ -88,6 +88,10 @@ void Wheels::printSpeedRight() {
     lcd.print(this->speedRight);
 }
 
+bool Wheels::isMoving() {
+    return this->dirLeft != 0 || this->dirRight != 0;
+}
+
 void Wheels::setSpeedRight(uint8_t s) {
     if(this->pinsAttached) {
         analogWrite(this->pinsRight[2], s);
@@ -151,6 +155,14 @@ void Wheels::back() {
     this->backRight();
 }
 
+void Wheels::turnLeft() {
+    this->forwardRight();
+}
+
+void Wheels::turnRight() {
+    this->forwardLeft();
+}
+
 void Wheels::stopLeft() {
     if(this->pinsAttached) {
         SET_MOVEMENT(pinsLeft, LOW, LOW);
@@ -205,4 +217,3 @@ void Wheels::updateBeeper() {
 void doBeep() {
   digitalWrite(BEEPER, digitalRead(BEEPER) ^ 1);
 }
-

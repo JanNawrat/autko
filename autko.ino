@@ -3,8 +3,7 @@
 #include "Wheels.h"
 
 Wheels w;
-unsigned long timeOfLastSignal;
-int maxTimeBetweenSignals = 100;
+unsigned long timeOfLastSignal = 0;
 
 void setup() {
     /*
@@ -41,7 +40,7 @@ void loop() {
     /*
     * receiving commands from remote
     */
-    while((RECEIVE_NEC || RECEIVE_PULSE_DISTANCE) && IrReciver.decode()) {
+    while((RECEIVE_NEC || RECEIVE_PULSE_DISTANCE) && IrReceiver.decode()) {
         Serial.println("IR input recived:");
         IrReceiver.printIRResultShort(&Serial); // Print complete received data in one line
         
@@ -71,30 +70,30 @@ void loop() {
                 }
                 case IR_REMOTE_UP: {
                     Serial.println("Received: UP");
-                    w.setForward();
+                    w.forward();
                     Serial.println("Moving forward");
-                    // TODO: holding code
+                    timeOfLastSignal = millis();
                     break;
                 }
                 case IR_REMOTE_DOWN: {
                     Serial.println("Received: DOWN");
-                    w.setBack();
+                    w.back();
                     Serial.println("Moving backward");
-                    // TODO: holding code
+                    timeOfLastSignal = millis();
                     break;
                 }
                 case IR_REMOTE_RIGHT: {
                     Serial.println("Received: RIGHT");
-                    // TODO: turn
+                    w.turnRight();
                     Serial.println("Turning right");
-                    // TODO: holding code
+                    timeOfLastSignal = millis();
                     break;
                 }
                 case IR_REMOTE_LEFT: {
                     Serial.println("Received: LEFT");
-                    // TODO: turn
+                    w.turnLeft();
                     Serial.println("Turning left");
-                    // TODO: holding code
+                    timeOfLastSignal = millis();
                     break;
                 }
                 case IR_REMOTE_OK: {
@@ -115,7 +114,7 @@ void loop() {
         * PULSE DISTANCE protocol
         */
         if(RECEIVE_PULSE_DISTANCE && IrReceiver.decodedIRData.protocol == NEC) {
-            unsigned long cmd = IrReceiver.decodedIRData.decodedRawData;
+            unsigned long command = IrReceiver.decodedIRData.decodedRawData;
             switch(command) {
                 case PD_REMOTE_1: {
                     Serial.println("Received: 1");
@@ -137,30 +136,30 @@ void loop() {
                 }
                 case PD_REMOTE_UP: {
                     Serial.println("Received: UP");
-                    w.setForward();
+                    w.forward();
                     Serial.println("Moving forward");
-                    // TODO: holding code
+                    timeOfLastSignal = millis();
                     break;
                 }
                 case PD_REMOTE_DOWN: {
                     Serial.println("Received: DOWN");
-                    w.setBack();
+                    w.back();
                     Serial.println("Moving backward");
-                    // TODO: holding code
+                    timeOfLastSignal = millis();
                     break;
                 }
                 case PD_REMOTE_RIGHT: {
                     Serial.println("Received: RIGHT");
-                    // TODO: turn
+                    w.turnRight();
                     Serial.println("Turning right");
-                    // TODO: holding code
+                    timeOfLastSignal = millis();
                     break;
                 }
                 case PD_REMOTE_LEFT: {
                     Serial.println("Received: LEFT");
-                    // TODO: turn
+                    w.turnLeft();
                     Serial.println("Turning left");
-                    // TODO: holding code
+                    timeOfLastSignal = millis();
                     break;
                 }
                 case PD_REMOTE_OK: {
@@ -178,7 +177,7 @@ void loop() {
         }
         // pulse distance seems to be using UNKNOWN for holding down
         if(RECEIVE_PULSE_DISTANCE && IrReceiver.decodedIRData.protocol == UNKNOWN) {
-            // TODO: holding down
+            timeOfLastSignal = millis();
         }
 
         /*
@@ -191,7 +190,11 @@ void loop() {
     /*
     * checking for releasing buttons
     */
-    // TODO
+    if((RECEIVE_NEC || RECEIVE_PULSE_DISTANCE) && w.isMoving()) {
+        if(millis() - timeOfLastSignal > MAX_TIME_BETWEEN_SIGNALS) {
+            w.stop();
+        }
+    }
   
     /*
     * receiveing commands from serial

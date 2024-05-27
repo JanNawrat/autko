@@ -50,6 +50,8 @@ class Wheels {
         void back();
         void backLeft();
         void backRight();
+        void turnLeft();
+        void turnRight();
         void stop();
         void stopLeft();
         void stopRight();
@@ -61,6 +63,7 @@ class Wheels {
         void setSpeed(uint8_t);
         void setSpeedRight(uint8_t);
         void setSpeedLeft(uint8_t);
+        bool isMoving();
         
         void goForward(int cm);
         void goBack(int cm);
